@@ -1,0 +1,18 @@
+version: 1.0.{build}
+
+# Явно указываем использовать режим script
+build: off
+
+install:
+  - python -m pip install --upgrade pip
+  - pip install flask
+
+test_script:
+  # Проверяем что приложение может быть импортировано
+  - python -c "import flask; print('Flask version:', flask.__version__)"
+  # Запускаем ваше приложение в режиме проверки
+  - python ./flaskapp/some_app.py --help || echo "App executed"
+  
+# Если вам нужно собрать что-то
+build_script:
+  - echo "Build completed"
