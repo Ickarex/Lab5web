@@ -1,22 +1,22 @@
-version: 1.0.{build}
+# .github/workflows/python-app.yml
+name: Python application
 
-# Явно указываем, что это скриптовая сборка
-build_script:
-  - echo "Starting Python project build..."
+on: [push]
 
-install:
-  - python -m pip install --upgrade pip
-  - pip install flask
-
-test_script:
-  - python -c "import flask; print('Flask version:', flask.__version__)"
-  - python ./flaskapp/some_app.py --help || echo "App executed"
-
-# Необязательные артефакты
-artifacts:
-  - path: '*.log'
-    name: Logs
-
-# Указываем, что не нужно кэшировать результаты MSBuild
-cache:
-  - '%LOCALAPPDATA%\pip\Cache'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask
+    - name: Test
+      run: |
+        python -c "import flask; print('Flask version:', flask.__version__)"
