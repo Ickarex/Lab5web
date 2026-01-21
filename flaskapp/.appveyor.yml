@@ -1,7 +1,7 @@
 version: 1.0.{build}
 
 # Явно указываем использовать режим script
-build: off
+build_mode: "Script"
 
 install:
   - python -m pip install --upgrade pip
