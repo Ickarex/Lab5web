@@ -1,11 +1,16 @@
-version: 1.0.{build}
+# Указываем, что это не .NET проект
+image: Ubuntu  # или используйте "Visual Studio 2019" если нужны Windows
+build: off  # отключаем автоматическую сборку MSBuild
 
-# Явно указываем использовать режим script
-build: off
+environment:
+  matrix:
+    - PYTHON: "C:\\Python39"
+    - PYTHON: "C:\\Python310"
 
 install:
   - python -m pip install --upgrade pip
   - pip install flask
+  - pip install -r requirements.txt  # если у вас есть requirements.txt
 
 test_script:
   # Проверяем что приложение может быть импортировано
@@ -13,6 +18,7 @@ test_script:
   # Запускаем ваше приложение в режиме проверки
   - python ./flaskapp/some_app.py --help || echo "App executed"
   
-# Если вам нужно собрать что-то
+# Опционально: дополнительные шаги сборки
 build_script:
   - echo "Build completed"
+  - python --version
