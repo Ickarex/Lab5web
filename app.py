@@ -19,7 +19,7 @@ def change():
     if not url :
         return jsonify({"error": "неверные данные"}), 400
     print(url)
-    filename = "./flaskapp/resources/temp_image.jpg"
+    filename = "./resources/temp_image.jpg"
     urllib.request.urlretrieve(url, filename)
     loadedImage = Image.open(filename)
     changedImage = changeImage(loadedImage)
