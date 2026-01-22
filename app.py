@@ -26,23 +26,35 @@ def index():
 def change():
     data = request.json
     url = data.get('url')
+    mode = data.get('mode')
+    print("="*50)
+    print(f"url: {url}; mode: {mode}")
+    print("="*50)
+    filename = "resources/temp_image.png"
+
     if not url :
         return jsonify({"error": "неверные данные"}), 400
-    print(url)
-    filename = "./resources/temp_image.jpg"
-    urllib.request.urlretrieve(url, filename)
+    
+    if url.startswith('https'):        
+        urllib.request.urlretrieve(url, filename)
+
     loadedImage = Image.open(filename)
-    changedImage = changeImage(loadedImage)
+    if mode == "change":
+        changedImage = changeImage(loadedImage)
+    elif mode == "watermark":
+        changedImage = watermarkAdd(loadedImage)
+    else:
+        changedImage = loadedImage
     changedImage.save(filename)
     return jsonify({
-        "message": "succesful",
+        "message": f"succesful, mode: {mode}",
         "url": "/getimage"
         })
 
 #endpoint для получения локального обработанного изображения
 @app.route('/getimage')
 def getimage():
-    return send_from_directory('resources', 'temp_image.jpg')
+    return send_from_directory('resources', 'temp_image.png')
 
 def changeImage(image):
     print("Image is changing now")
@@ -50,6 +62,20 @@ def changeImage(image):
     image_arr = np.transpose(image_arr, (1,0,2))
     res = Image.fromarray(image_arr)
     return res
+
+def watermarkAdd(image):
+    print("Watermark on/off")
+    watermark = Image.open("./resources/watermark.png")
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
+    if watermark.mode != 'RGBA':
+        watermark = watermark.convert('RGBA')
+    bg_width, bg_height = image.size
+    wm_width, wm_height = watermark.size
+    x = bg_width - wm_width
+    y = bg_height - wm_height
+    image.paste(watermark, (x, y), watermark)
+    return image
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

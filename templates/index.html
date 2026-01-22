@@ -36,7 +36,7 @@
         }
 
         .image-container {
-            height: 900px;
+            height: 400px;
             width: 100%;
             margin: 20px 0;
             padding: 10px;
@@ -124,6 +124,95 @@
         ::-webkit-scrollbar-track {
             background: #40C;
         }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .custom-checkbox {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        /* скрывание стандартного чекбокса */
+        .custom-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* кастомный квадрат чекбокса */
+        .checkmark {
+            position: relative;
+            height: 22px;
+            width: 22px;
+            background-color: #fff;
+            border: 2px solid #6f42c1;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-checkbox:hover input ~ .checkmark {
+            border-color: #e83e8c;
+            background-color: #f8f9fa;
+        }
+
+        .custom-checkbox input:checked ~ .checkmark {
+            background: linear-gradient(to right, #6f42c1, #e83e8c);
+            border-color: #AC40A7;
+        }
+
+        /* галочка (скрытая) */
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* показать галочку */
+        .custom-checkbox input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .custom-checkbox input:focus ~ .checkmark {
+            box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.2);
+            outline: none;
+        }
+
+        .checkbox-label {
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            margin-left: 5px;
+        }
+
+        .custom-checkbox input:disabled ~ .checkmark {
+            background-color: #eee;
+            border-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .custom-checkbox input:disabled:checked ~ .checkmark {
+            background: linear-gradient(to right, #aaa, #ccc);
+        }
+
     </style>
     <body>
         <div class="container">
@@ -139,9 +228,16 @@
                     class="input-box"
                     placeholder="Введите URL изображения...">
                 <button id="loadbtn" class="load-button">Загрузить изображение</button>
+                <div class="checkbox-wrapper">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="watermark" name="watermark" value="Водяной знак">
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">Водяной знак</span>
+                    </label>              
+                </div>                  
             </div>
-            <label for="changebtn"><span id="message"></span></label>
             <button id="changebtn" class="change-button">Изменить изображение</button>
+            <label for="changebtn"><span id="message"></span></label>        
         </div>
 
         <script>
@@ -151,6 +247,7 @@
             const loadbtn = document.getElementById("loadbtn");
             const changebtn = document.getElementById("changebtn");
             const msg = document.getElementById("message");
+            const wmcheck = document.getElementById("watermark");
 
             function loadimage() {
                 const url = imageurl.value.trim();
@@ -163,20 +260,25 @@
                 imageurl.value = '';
             }
 
-            async function sendtoserver() {
+            async function sendtoserver(mode) {
                 try {
+                    const changedmode = mode;
                     const url = img1.src;
                     if (!url || url === window.location.origin + "/") {
                         alert("Введите URL изображения");
                         return;
                     }
+
+                    const wmon = wmcheck.checked;
+
                     const response = await fetch(SERVER_URL + '/api/changeimage', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            url: url
+                            url: url,
+                            mode: changedmode
                         })
                     });
 
@@ -185,10 +287,9 @@
                     if (response.ok) {
                         msg.textContent = result.message;
                         if (result.url) {
-                            const fullUrl = result.url.startsWith('http') ? result.url : SERVER_URL + result.url;
-                            const height = img1.height;
-                            img1.src = result.url;
-                            img1.width = height;
+                            const fullUrl = result.url.startsWith('https') ? result.url : SERVER_URL + result.url;
+                            msg.textContent += "   " + fullUrl;
+                            img1.src = fullUrl;
                         }
                     } else {
                         msg.textContent = result.error;
@@ -201,7 +302,13 @@
                 }
             }
 
-            changebtn.addEventListener('click', sendtoserver);
+            wmcheck.addEventListener('change', function() {
+                msg.textContent = "checkbox changed";
+                sendtoserver("watermark");
+            }); 
+            changebtn.addEventListener('click', function() {
+                sendtoserver("change");
+            });
             loadbtn.addEventListener('click', loadimage);
             imageurl.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
