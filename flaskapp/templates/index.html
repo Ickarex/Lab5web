@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab3Web</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-image: linear-gradient(to right top, red, blue);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 5px solid;            
+            border-image: linear-gradient(to right, red, blue) 1;
+        }
+
+        .image-container {
+            height: 900px;
+            width: 100%;
+            margin: 20px 0;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            justify-content: center;
+        }
+
+        .image-container img {
+            height: 100%;
+            max-width: 100%;
+            width: auto;
+            object-fit: contain;
+            border-radius: 5px;
+            flex-shrink: 0;
+        }
+
+        .url-input-container {
+            margin-top: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            display: flex;
+            gap: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .load-button, .change-button {
+            padding: 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+
+        }
+
+        .load-button {
+            width: 25%;
+            background: linear-gradient(to right, #6f42c1, #e83e8c);
+        }
+
+        .change-button {
+            width: 100%;
+            background: linear-gradient(to right, #45DD45, #45CCDD);
+            margin-top: 10px;
+        }
+
+        .load-button:hover, .change-button:hover {
+            opacity: 0.8;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #A00;
+            border-radius: 4px;
+            transition: opacity 0.3s;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #40C;
+        }
+    </style>
+    <body>
+        <div class="container">
+            <h1>Веб-сервис для обработки фото</h1>
+            <div class="image-container">
+                <img id="image1">
+            </div>
+            <label for="url-input-container">URL изображения:</label>            
+            <div class="url-input-container">
+                <input
+                    type="url"
+                    id="imageUrl"
+                    class="input-box"
+                    placeholder="Введите URL изображения...">
+                <button id="loadbtn" class="load-button">Загрузить изображение</button>
+            </div>
+            <label for="changebtn"><span id="message"></span></label>
+            <button id="changebtn" class="change-button">Изменить изображение</button>
+        </div>
+
+        <script>
+            const SERVER_URL = "http://localhost:5000";
+            const img1 = document.getElementById("image1");
+            const imageurl = document.getElementById("imageUrl");
+            const loadbtn = document.getElementById("loadbtn");
+            const changebtn = document.getElementById("changebtn");
+            const msg = document.getElementById("message");
+
+            function loadimage() {
+                const url = imageurl.value.trim();
+                if (!url) {
+                    alert("Введите URL изображения");
+                    return;
+                }
+                img1.src = url;
+                img1.alt = "Загруженное изображение";
+                imageurl.value = '';
+            }
+
+            async function sendtoserver() {
+                try {
+                    const url = img1.src;
+                    if (!url) {
+                        alert("Введите URL изображения");
+                        return;
+                    }
+                    const response = await fetch('http://localhost:5000/api/changeimage', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            url: url
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        msg.textContent = result.message;
+                        if (result.url) {
+                            const height = img1.height;
+                            img1.src = result.url;
+                            img1.width = height;
+                        }
+                    } else {
+                        msg.textContent = result.error;
+                    }
+
+
+                } catch (error) {
+                    console.error("ошибка отправки изображения", error);
+                    alert('Ошибка соединения с сервером');
+                }
+            }
+
+            changebtn.addEventListener('click', sendtoserver);
+            loadbtn.addEventListener('click', loadimage);
+            imageurl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loadimage();
+                }
+            });
+        </script>
+    </body>
