@@ -249,6 +249,8 @@
             const msg = document.getElementById("message");
             const wmcheck = document.getElementById("watermark");
 
+            let imageLoaded = false;
+
             function loadimage() {
                 const url = imageurl.value.trim();
                 if (!url) {
@@ -258,6 +260,7 @@
                 img1.src = url;
                 img1.alt = "Загруженное изображение";
                 imageurl.value = '';
+                imageLoaded = false;
             }
 
             async function sendtoserver(mode) {
@@ -278,7 +281,8 @@
                         },
                         body: JSON.stringify({
                             url: url,
-                            mode: changedmode
+                            mode: changedmode,
+                            isloaded: imageLoaded
                         })
                     });
 
@@ -290,6 +294,7 @@
                             const fullUrl = result.url.startsWith('https') ? result.url : SERVER_URL + result.url;
                             msg.textContent += "   " + fullUrl;
                             img1.src = fullUrl;
+                            imageLoaded = true;
                         }
                     } else {
                         msg.textContent = result.error;

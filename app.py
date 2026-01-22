@@ -7,7 +7,6 @@ from PIL import Image
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-image_downloaded = False
 
 
 # Создаем папку resources при запуске приложения
@@ -26,10 +25,10 @@ def index():
 
 @app.route("/api/changeimage", methods=['POST'])
 def change():
-    global image_downloaded
     data = request.json
     url = data.get('url')
     mode = data.get('mode')
+    image_downloaded = data.get("isloaded")
     print("="*50)
     print(f"url: {url}; mode: {mode}")
     print("="*50)
