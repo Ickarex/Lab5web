@@ -145,7 +145,7 @@
         </div>
 
         <script>
-            const SERVER_URL = "http://localhost:5000";
+            const SERVER_URL = window.location.origin;
             const img1 = document.getElementById("image1");
             const imageurl = document.getElementById("imageUrl");
             const loadbtn = document.getElementById("loadbtn");
@@ -166,11 +166,11 @@
             async function sendtoserver() {
                 try {
                     const url = img1.src;
-                    if (!url) {
+                    if (!url || url === window.location.origin + "/") {
                         alert("Введите URL изображения");
                         return;
                     }
-                    const response = await fetch('http://localhost:5000/api/changeimage', {
+                    const response = await fetch(SERVER_URL + '/api/changeimage', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -185,6 +185,7 @@
                     if (response.ok) {
                         msg.textContent = result.message;
                         if (result.url) {
+                            const fullUrl = result.url.startsWith('http') ? result.url : SERVER_URL + result.url;
                             const height = img1.height;
                             img1.src = result.url;
                             img1.width = height;
