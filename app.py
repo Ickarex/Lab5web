@@ -8,6 +8,16 @@ from PIL import Image
 app = Flask(__name__)
 CORS(app)
 
+# Создаем папку resources при запуске приложения
+def ensure_resources_folder():
+    resources_path = "resources"
+    if not os.path.exists(resources_path):
+        os.makedirs(resources_path, exist_ok=True)
+        print(f"Created {resources_path} directory")
+
+# Вызываем при запуске
+ensure_resources_folder()
+
 @app.route('/')
 def index():
     return render_template('index.html')
