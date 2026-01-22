@@ -7,6 +7,7 @@ from PIL import Image
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
+image_downloaded = False
 
 # Создаем папку resources при запуске приложения
 def ensure_resources_folder():
@@ -35,8 +36,9 @@ def change():
     if not url :
         return jsonify({"error": "неверные данные"}), 400
     
-    if url.startswith('https'):        
+    if not image_downloaded:        
         urllib.request.urlretrieve(url, filename)
+        image_downloaded = True
 
     loadedImage = Image.open(filename)
     if mode == "change":
