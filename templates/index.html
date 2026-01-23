@@ -31,8 +31,14 @@
             text-align: center;
             color: #333;
             margin-bottom: 20px;
-            border-bottom: 5px solid;            
+            border-bottom: 5px solid;       
             border-image: linear-gradient(to right, red, blue) 1;
+        }
+
+        h2 {
+            text-align: justify;
+            color: #333;
+            font-size: 1.2em;
         }
 
         .image-container {
@@ -58,7 +64,7 @@
         }
 
         .url-input-container {
-            margin-top: 10px;
+            margin: 10px 0;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 5px;
@@ -83,7 +89,7 @@
             box-sizing: border-box;
         }
 
-        .load-button, .change-button {
+        .load-button, .change-button, .return-button {
             padding: 10px;
             color: white;
             border: none;
@@ -96,17 +102,21 @@
         }
 
         .load-button {
-            width: 25%;
+            min-width: 200px;
             background: linear-gradient(to right, #6f42c1, #e83e8c);
         }
 
         .change-button {
-            width: 100%;
+            min-width: 200px;
             background: linear-gradient(to right, #45DD45, #45CCDD);
-            margin-top: 10px;
         }
 
-        .load-button:hover, .change-button:hover {
+        .return-button {
+            min-width: 200px;
+            background: linear-gradient(to right, #45DD45, #45CCDD);
+        }
+
+        .load-button:hover, .change-button:hover, .return-button {
             opacity: 0.8;
         }
 
@@ -126,11 +136,13 @@
         }
 
         .checkbox-wrapper {
+            width: 100%;
             display: flex;
-            align-items: center;
             gap: 8px;
             margin-left: auto;
             white-space: nowrap;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .custom-checkbox {
@@ -216,10 +228,23 @@
     </style>
     <body>
         <div class="container">
-            <h1>Веб-сервис для обработки фото</h1>
+            <h1>Веб-сервис для обработки изображений</h1>
+            <h2>
+                Вариант 15: Веб-приложение должно закрасить части изображения в соответствии с
+                шахматным порядком, размер шахматной клетки задает пользователь в
+                процентах от размера исходного изображения. Нарисовать график
+                распределения цветов для исходного изображения и нового.
+            </h2>            
             <div class="image-container">
                 <img id="image1">
             </div>
+            <div class="checkbox-wrapper">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="watermark" name="watermark" value="Водяной знак">
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">Водяной знак</span>
+                </label>              
+            </div>               
             <label for="url-input-container">URL изображения:</label>            
             <div class="url-input-container">
                 <input
@@ -227,17 +252,23 @@
                     id="imageUrl"
                     class="input-box"
                     placeholder="Введите URL изображения...">
-                <button id="loadbtn" class="load-button">Загрузить изображение</button>
-                <div class="checkbox-wrapper">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" id="watermark" name="watermark" value="Водяной знак">
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">Водяной знак</span>
-                    </label>              
-                </div>                  
+                <button id="loadbtn" class="load-button">Загрузить изображение</button>               
             </div>
-            <button id="changebtn" class="change-button">Изменить изображение</button>
-            <label for="changebtn"><span id="message"></span></label>        
+            <label for="changecnt">Размер шахматной клетки (в %):</label>            
+            <div class="url-input-container" id="changecnt">
+                <input
+                    type="number"
+                    id="chessinput"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value="1"
+                    class="input-box"
+                    placeholder="Введите размер шахматной клетки...">
+                <button id="changebtn" class="change-button">Изменить изображение</button>
+                <button id="returnbtn" class="return-button">Вернуть исходное</button>
+            </div>
+            <label for="changecnt"><span id="message"></span></label>        
         </div>
 
         <script>
@@ -248,8 +279,21 @@
             const changebtn = document.getElementById("changebtn");
             const msg = document.getElementById("message");
             const wmcheck = document.getElementById("watermark");
+            const chessSize = document.getElementById("chessinput");
+            const returnbtn = document.getElementById("returnbtn");
+
+            let chess = parseInt(chessSize.value) || 1;
+
+            if (chess < 1) {
+                chessSize.value = "1";
+                chess = 1;
+            } else if (chess > 100) {
+                chessSize.value = "100";
+                chess = 0;
+            }            
 
             let imageLoaded = false;
+            let orig_url = '';
 
             function loadimage() {
                 const url = imageurl.value.trim();
@@ -258,9 +302,18 @@
                     return;
                 }
                 img1.src = url;
+                orig_url = url;
                 img1.alt = "Загруженное изображение";
                 imageurl.value = '';
                 imageLoaded = false;
+            }
+
+            function returnOrig() {
+                if (!orig_url || (orig_url === '')) {
+                    alert("Нет исходного изображения");
+                    return;
+                }
+                img1.src=orig_url;
             }
 
             async function sendtoserver(mode) {
@@ -271,8 +324,12 @@
                         alert("Введите URL изображения");
                         return;
                     }
+                    if (!chessSize) {
+                        chess = 0;
+                        return;
+                    }
 
-                    const wmon = wmcheck.checked;
+                    const iswatermark = wmcheck.checked;
 
                     const response = await fetch(SERVER_URL + '/api/changeimage', {
                         method: 'POST',
@@ -282,7 +339,9 @@
                         body: JSON.stringify({
                             url: url,
                             mode: changedmode,
-                            isloaded: imageLoaded
+                            isloaded: imageLoaded,
+                            iswatermark: iswatermark,
+                            chessSize: chessSize.value.trim()
                         })
                     });
 
@@ -290,11 +349,18 @@
 
                     if (response.ok) {
                         msg.textContent = result.message;
+                        if (result.chessSize) {
+                            chessSize.value = result.chessSize.toString();
+                        }
                         if (result.url) {
                             const fullUrl = result.url.startsWith('https') ? result.url : SERVER_URL + result.url;
                             msg.textContent += "   " + fullUrl;
-                            img1.src = fullUrl;
                             imageLoaded = true;
+                            if (imageLoaded) {
+                                img1.src = fullUrl + "?t=" + new Date().getTime();
+                            } else {
+                                img1.src = fullUrl;
+                            }
                         }
                     } else {
                         msg.textContent = result.error;
@@ -315,6 +381,7 @@
                 sendtoserver("change");
             });
             loadbtn.addEventListener('click', loadimage);
+            returnbtn.addEventListener('click', returnOrig);
             imageurl.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     loadimage();

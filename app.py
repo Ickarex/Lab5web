@@ -29,10 +29,18 @@ def change():
     url = data.get('url')
     mode = data.get('mode')
     image_downloaded = data.get("isloaded")
+    watermark_active = data.get("iswatermark")
+    chessSize = int(data.get("chessSize"))
+    print(f"chessSize: {chessSize}")
+    if (not chessSize) | (chessSize < 1):
+        chessSize = 1
+    elif (chessSize > 100):
+        chessSize = 100
     print("="*50)
     print(f"url: {url}; mode: {mode}")
     print("="*50)
     filename = "resources/temp_image.png"
+    img_without_wm = "resources/temp_image_without_watermark.png"
 
     if not url :
         return jsonify({"error": "неверные данные"}), 400
@@ -43,14 +51,19 @@ def change():
 
     loadedImage = Image.open(filename)
     if mode == "change":
-        changedImage = changeImage(loadedImage)
-    elif mode == "watermark":
+        changedImage = changeImage(loadedImage, chessSize)
+    elif (mode == "watermark") & watermark_active:
+        loadedImage.save(img_without_wm)
         changedImage = watermarkAdd(loadedImage)
+    elif (mode == "watermark") & (not watermark_active):
+        changedImage = Image.open(img_without_wm)
     else:
         changedImage = loadedImage
+        changedImage.save(img_without_wm)
     changedImage.save(filename)
     return jsonify({
         "message": f"succesful, mode: {mode}",
+        "chessSize": f"{chessSize}",
         "url": "/getimage"
         })
 
@@ -59,12 +72,19 @@ def change():
 def getimage():
     return send_from_directory('resources', 'temp_image.png')
 
-def changeImage(image):
+def changeImage(image, chessSize):
     print("Image is changing now")
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
     image_arr = np.array(image)
-    image_arr = np.transpose(image_arr, (1,0,2))
-    res = Image.fromarray(image_arr)
-    return res
+    height, width = image_arr.shape[:2]
+    cell_h, cell_w = height*chessSize//100, width*chessSize//100
+    for i in range(0, height, 2*cell_h):
+        for j in range(0, width, 2*cell_w):
+            image_arr[i:cell_h+i,j:cell_w+j,:] = [1,1,1,1]
+            image_arr[i+cell_h:i+2*cell_h, j+cell_w:j+2*cell_w,:] = [1,1,1,1]
+    image = Image.fromarray(image_arr)
+    return image
 
 def watermarkAdd(image):
     print("Watermark on/off")
