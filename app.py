@@ -4,6 +4,9 @@ import urllib.request
 import os
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -50,6 +53,7 @@ def change():
         image_downloaded = True
 
     loadedImage = Image.open(filename)
+
     if mode == "change":
         changedImage = changeImage(loadedImage, chessSize)
     elif (mode == "watermark") & watermark_active:
@@ -57,20 +61,49 @@ def change():
         changedImage = watermarkAdd(loadedImage)
     elif (mode == "watermark") & (not watermark_active):
         changedImage = Image.open(img_without_wm)
+    elif (mode == "return"):
+        urllib.request.urlretrieve(url, filename)
+        changedImage = Image.open(filename)
     else:
         changedImage = loadedImage
         changedImage.save(img_without_wm)
     changedImage.save(filename)
+    gist(changedImage)
     return jsonify({
         "message": f"succesful, mode: {mode}",
         "chessSize": f"{chessSize}",
-        "url": "/getimage"
+        "url": "/getimage",
+        "graphurl": "/getgraph"
         })
 
 #endpoint для получения локального обработанного изображения
 @app.route('/getimage')
 def getimage():
     return send_from_directory('resources', 'temp_image.png')
+
+@app.route('/getgraph')
+def getgraph():
+    return send_from_directory('resources', 'graph.png')
+
+def gist(image):
+    img_array = np.array(image)
+    r_channel = img_array[:,:,0].ravel()
+    g_channel = img_array[:,:,0].ravel()
+    b_channel = img_array[:,:,0].ravel()
+
+    plt.figure(figsize=(12,8))
+    plt.subplot(1,3,1)
+    plt.hist(r_channel, bins=256, color='red', alpha=1, label='Red')
+    plt.ylabel('Частота')
+    plt.subplot(1,3,2)
+    plt.hist(g_channel, bins=256, color='green', alpha=1, label='Green')
+    plt.title('Распределение цветов по каналам')
+    plt.xlabel('Значение пикселя')   
+    plt.subplot(1,3,3)
+    plt.hist(b_channel, bins=256, color='blue', alpha=1, label='Blue') 
+    plt.grid(True, alpha=0.3)
+    plt.savefig("resources/graph.png", dpi=300, bbox_inches='tight')
+    plt.close
 
 def changeImage(image, chessSize):
     print("Image is changing now")
@@ -81,8 +114,8 @@ def changeImage(image, chessSize):
     cell_h, cell_w = height*chessSize//100, width*chessSize//100
     for i in range(0, height, 2*cell_h):
         for j in range(0, width, 2*cell_w):
-            image_arr[i:cell_h+i,j:cell_w+j,:] = [1,1,1,1]
-            image_arr[i+cell_h:i+2*cell_h, j+cell_w:j+2*cell_w,:] = [1,1,1,1]
+            image_arr[i:cell_h+i,j:cell_w+j,:] = [255,255,255,1]
+            image_arr[i+cell_h:i+2*cell_h, j+cell_w:j+2*cell_w,:] = [255,255,255,1]
     image = Image.fromarray(image_arr)
     return image
 

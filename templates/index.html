@@ -36,6 +36,7 @@
         }
 
         h2 {
+            margin-top: 5px;
             text-align: justify;
             color: #333;
             font-size: 1.2em;
@@ -116,7 +117,7 @@
             background: linear-gradient(to right, #45DD45, #45CCDD);
         }
 
-        .load-button:hover, .change-button:hover, .return-button {
+        .load-button:hover, .change-button:hover, .return-button:hover {
             opacity: 0.8;
         }
 
@@ -268,7 +269,11 @@
                 <button id="changebtn" class="change-button">Изменить изображение</button>
                 <button id="returnbtn" class="return-button">Вернуть исходное</button>
             </div>
-            <label for="changecnt"><span id="message"></span></label>        
+            <label for="changecnt"><span id="message"></span></label>  
+            <h2>Графики:</h2>
+            <div class="image-container">
+                <img id="graphimg">
+            </div>      
         </div>
 
         <script>
@@ -281,6 +286,7 @@
             const wmcheck = document.getElementById("watermark");
             const chessSize = document.getElementById("chessinput");
             const returnbtn = document.getElementById("returnbtn");
+            const graphimg = document.getElementById("graphimg");
 
             let chess = parseInt(chessSize.value) || 1;
 
@@ -306,6 +312,7 @@
                 img1.alt = "Загруженное изображение";
                 imageurl.value = '';
                 imageLoaded = false;
+                sendtoserver("graph");
             }
 
             function returnOrig() {
@@ -314,6 +321,7 @@
                     return;
                 }
                 img1.src=orig_url;
+                sendtoserver("return");                
             }
 
             async function sendtoserver(mode) {
@@ -354,12 +362,15 @@
                         }
                         if (result.url) {
                             const fullUrl = result.url.startsWith('https') ? result.url : SERVER_URL + result.url;
+                            const fullgraphUrl = result.graphurl.startsWith('https') ? result.graphurl : SERVER_URL + result.graphurl;
                             msg.textContent += "   " + fullUrl;
                             imageLoaded = true;
                             if (imageLoaded) {
                                 img1.src = fullUrl + "?t=" + new Date().getTime();
+                                graphimg.src = fullgraphUrl + "?t=" + new Date().getTime();
                             } else {
                                 img1.src = fullUrl;
+                                graphimg.src = fullgraphUrl + "?t=" + new Date().getTime();
                             }
                         }
                     } else {
